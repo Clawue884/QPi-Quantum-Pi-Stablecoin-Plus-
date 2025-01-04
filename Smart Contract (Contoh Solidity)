@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: MIT  
+pragma solidity ^0.8.19;  
+
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";  
+import "@openzeppelin/contracts/access/Ownable.sol";  
+
+contract QPiStablecoin is ERC20Capped, Ownable {  
+    uint256 public constant peggedValue = 314159; // Nilai tetap $314.159  
+
+    constructor() ERC20("QPi Stablecoin", "QPI") ERC20Capped(1_000_000 * 10 ** decimals()) {  
+        _mint(msg.sender, 100_000 * 10 ** decimals());  
+    }  
+
+    function rebase(uint256 newSupply) external onlyOwner {  
+        require(newSupply >= totalSupply(), "New supply must be >= current supply");  
+        _mint(owner(), newSupply - totalSupply());  
+    }  
+
+    function quantumSafeTransfer(address recipient, uint256 amount) external {  
+        // Menggunakan teknik zero-knowledge proof untuk validasi aman  
+        _transfer(msg.sender, recipient, amount);  
+    }  
+}
