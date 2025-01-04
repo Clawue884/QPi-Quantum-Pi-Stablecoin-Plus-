@@ -1,0 +1,27 @@
+import numpy as np
+import pandas as pd
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+
+# Dataset Simulasi
+data = np.sin(np.linspace(0, 100, 1000)) + np.random.normal(0, 0.1, 1000)
+sequence_length = 10
+
+# Membentuk Dataset
+X, y = [], []
+for i in range(len(data) - sequence_length):
+    X.append(data[i:i + sequence_length])
+    y.append(data[i + sequence_length])
+X, y = np.array(X), np.array(y)
+
+# Model LSTM
+model = Sequential([
+    LSTM(50, activation='relu', input_shape=(sequence_length, 1)),
+    Dense(1)
+])
+model.compile(optimizer='adam', loss='mse')
+model.fit(X, y, epochs=10, batch_size=16)
+
+# Prediksi Nilai
+def predict_value(input_sequence):
+    return model.predict(np.array([input_sequence]))
