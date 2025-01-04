@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+contract QPiStablecoin {
+    AggregatorV3Interface internal priceFeed;
+
+    uint256 public totalSupply;
+    uint256 public constant TARGET_PRICE = 314159; // $314.159 dalam basis 6 desimal
+    uint256 public adjustmentFactor = 1e6; // Faktor penyesuaian
+
+    address public governance;
+
+    modifier onlyGovernance() {
+        require(msg.sender == governance, "Not authorized");
+        _;
+    }
+
+    constructor(address _priceFeed, address _governance) {
+        priceFeed = AggregatorV3Interface(_priceFeed);
+        governance = _governance;
+        totalSupply = 1000000 * 1e18; // Pasokan awal
+    }
+
+    // Mendapatkan harga QPi dari Chainlink Oracle
+    function getPrice() public view returns (uint256) {
+        (, int256 price, , , ) = priceFeed.latestRoundData();
+        return uint256(price);
+    }
+
+    // Penyesuaian Pasokan untuk Stabilitas
+    function adjustSupply() public onlyGovernance {
+        uint256 currentPrice = getPrice();
+
+        if (currentPrice > TARGET_PRICE) {
+            uint256 excessSupply = (currentPrice - TARGET_PRICE) * adjustmentFactor / TARGET_PRICE;
+            totalSupply -= excessSupply;
+        } else if (currentPrice < TARGET_PRICE) {
+            uint256 additionalSupply = (TARGET_PRICE - currentPrice) * adjustmentFactor / TARGET_PRICE;
+            totalSupply += additionalSupply;
+        }
+    }
+
+    // Fungsi untuk memperbarui parameter
+    function updateAdjustmentFactor(uint256 _newFactor) public onlyGovernance {
+        adjustmentFactor = _newFactor;
+    }
+}
